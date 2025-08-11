@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>St. Xavier's Digital Canteen</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 8px;
+            color: white;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .toast.show { opacity: 1; visibility: visible; }
+        .toast.success { background-color: #28a745; }
+        .toast.error { background-color: #dc3545; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div id="app" class="max-w-4xl mx-auto p-4">
+
+        <!-- Login Screen -->
+        <div id="login-screen" class="fade-in">
+            <div class="bg-white p-8 rounded-xl shadow-lg text-center max-w-sm mx-auto mt-16">
+                <h1 class="text-3xl font-bold text-blue-600 mb-2">St. Xavier's Canteen</h1>
+                <p class="text-gray-500 mb-8">Pre-order your meals easily.</p>
+                
+                <div id="student-login">
+                    <h2 class="text-xl font-semibold mb-4">Student Login</h2>
+                    <input type="text" id="roll-number" placeholder="Enter Your Roll Number" class="w-full p-3 border rounded-lg mb-4 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <button id="student-login-btn" class="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Login as Student</button>
+                </div>
+
+                <div class="my-6 border-t border-gray-200"></div>
+
+                <div id="canteen-login">
+                    <h2 class="text-xl font-semibold mb-4">Canteen Login</h2>
+                    <input type="text" id="canteen-user" placeholder="Username" class="w-full p-3 border rounded-lg mb-4 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    <input type="password" id="canteen-pass" placeholder="Password" class="w-full p-3 border rounded-lg mb-4 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    <button id="canteen-login-btn" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors">Login as Canteen</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student View -->
+        <div id="student-view" class="hidden fade-in">
+            <header class="flex justify-between items-center mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold">Welcome, Student <span id="student-id-display" class="text-blue-600"></span></h1>
+                    <p class="text-gray-500">What would you like to order today?</p>
+                </div>
+                <button id="student-logout-btn" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">Logout</button>
+            </header>
+            
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Menu Section -->
+                <div>
+                    <h2 class="text-xl font-bold mb-4">Today's Menu</h2>
+                    <div id="meal-capacity-alert" class="hidden bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-lg mb-4">
+                        <p class="font-bold">Meals Sold Out!</p>
+                        <p>The 200 meal limit for today has been reached.</p>
+                    </div>
+                    <div id="menu-items" class="space-y-4">
+                        <!-- Menu items will be injected here -->
+                    </div>
+                </div>
+
+                <!-- Cart & Order Section -->
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-xl font-bold mb-4">Your Order</h2>
+                    <div id="cart-items" class="space-y-3 mb-4">
+                        <p class="text-gray-500 text-center">Your cart is empty.</p>
+                    </div>
+                    <div class="border-t pt-4">
+                        <div class="flex justify-between items-center font-bold text-lg mb-4">
+                            <span>Total:</span>
+                            <span id="cart-total">₹0</span>
+                        </div>
+                        <div class="mb-4">
+                            <label for="time-slot" class="block font-semibold mb-2">Select Pickup Time:</label>
+                            <select id="time-slot" class="w-full p-3 border rounded-lg bg-gray-50">
+                                <option value="10:30 AM">10:30 AM Break</option>
+                                <option value="1:00 PM">1:00 PM Lunch</option>
+                            </select>
+                        </div>
+                        <button id="place-order-btn" class="w-full bg-green-600 text-white p-3 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">Place Order</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order History -->
+            <div class="mt-12">
+                <h2 class="text-2xl font-bold mb-4">Your Order History</h2>
+                <div id="order-history" class="bg-white p-6 rounded-xl shadow-md space-y-4">
+                    <!-- History will be injected here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Canteen View -->
+        <div id="canteen-view" class="hidden fade-in">
+            <header class="flex justify-between items-center mb-6">
+                 <div>
+                    <h1 class="text-2xl font-bold">Canteen Dashboard (Chandrettan's View)</h1>
+                    <p class="text-gray-500">Live orders and daily summary.</p>
+                </div>
+                <button id="canteen-logout-btn" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">Logout</button>
+            </header>
+
+            <!-- Daily Summary -->
+            <div class="grid md:grid-cols-3 gap-4 mb-8">
+                <div class="bg-white p-4 rounded-xl shadow">
+                    <h3 class="font-bold text-gray-500">Total Orders</h3>
+                    <p id="summary-total-orders" class="text-3xl font-bold">0</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow">
+                    <h3 class="font-bold text-gray-500">Total Collections</h3>
+                    <p id="summary-total-collections" class="text-3xl font-bold text-green-600">₹0</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow">
+                    <h3 class="font-bold text-gray-500">Pending Dues</h3>
+                    <p id="summary-pending-dues" class="text-3xl font-bold text-red-600">₹0</p>
+                </div>
+            </div>
+            
+            <!-- Meal Capacity -->
+            <div class="mb-8 bg-white p-4 rounded-xl shadow">
+                <h3 class="font-bold text-lg mb-2">Meal Capacity (200 Limit)</h3>
+                <div class="w-full bg-gray-200 rounded-full h-6">
+                    <div id="meal-capacity-bar" class="bg-blue-600 h-6 rounded-full text-center text-white font-bold" style="width: 0%;">0/200</div>
+                </div>
+            </div>
+
+            <!-- Orders Section -->
+            <div class="grid md:grid-cols-2 gap-8">
+                <div>
+                    <h2 class="text-xl font-bold mb-4">Orders for 10:30 AM Break</h2>
+                    <div id="orders-1030" class="space-y-4">
+                        <p class="text-gray-500">No orders yet.</p>
+                    </div>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold mb-4">Orders for 1:00 PM Lunch</h2>
+                    <div id="orders-1300" class="space-y-4">
+                         <p class="text-gray-500">No orders yet.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Toast Notification -->
+        <div id="toast" class="toast"></div>
+    </div>
+
+    <script type="module">
+    // Firebase Imports
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, addDoc, collection, query, where, onSnapshot, updateDoc, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAXJW6rKem45qxv2KpTQEPrH1zSYrZL5iA", // This is your key
+      authDomain: "canteen-app-7d6f5.firebaseapp.com",
+      projectId: "canteen-app-7d6f5",
+      storageBucket: "canteen-app-7d6f5.firebasestorage.app",
+      messagingSenderId: "805237281221",
+      appId: "1:805237281221:web:3cbdc798e06bff7597fbac",
+      measurementId: "G-8CZK5ZXSQM"
+    };
+
+    // --- Firebase Initialization ---
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    setLogLevel('debug'); // Optional: for seeing detailed logs in the browser console
+
+    // --- Firestore Collection Reference ---
+    // This is the corrected, simpler path for your own database.
+    const ordersCollectionRef = collection(db, 'orders');
+
+    // --- App State ---
+    let currentUser = null;
+    let currentRollNumber = null;
+    let cart = [];
+    const menu = [
+        { id: 'meal', name: 'Meals', price: 40 },
+        { id: 'chai', name: 'Chai', price: 10 },
+        { id: 'snacks', name: 'Snacks', price: 15 } // Base price
+    ];
+    const MEAL_CAPACITY = 200;
+    let mealOrdersCount = 0;
+    let unsubscribeCanteen = null;
+    let unsubscribeStudent = null;
+
+    // --- UI Elements ---
+    const loginScreen = document.getElementById('login-screen');
+    const studentView = document.getElementById('student-view');
+    const canteenView = document.getElementById('canteen-view');
+    const toast = document.getElementById('toast');
+    
+    // --- Utility Functions ---
+    function showToast(message, type = 'success') {
+        toast.textContent = message;
+        toast.className = `toast show ${type}`;
+        setTimeout(() => {
+            toast.className = 'toast';
+        }, 3000);
+    }
+
+    // --- Authentication Logic ---
+    async function initializeAuth() {
+        try {
+            await signInAnonymously(auth);
+        } catch (error) {
+            console.error("Authentication failed:", error);
+            showToast("Authentication failed. Please refresh.", "error");
+        }
+
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                currentUser = user;
+                console.log("Authenticated user:", user.uid);
+                const loggedInAs = sessionStorage.getItem('loggedInAs');
+                const rollNumber = sessionStorage.getItem('rollNumber');
+                if (loggedInAs === 'student' && rollNumber) {
+                    currentRollNumber = rollNumber;
+                    showStudentView();
+                } else if (loggedInAs === 'canteen') {
+                    showCanteenView();
+                }
+            } else {
+                currentUser = null;
+                showLoginScreen();
+            }
+        });
+    }
+
+    document.getElementById('student-login-btn').addEventListener('click', () => {
+        const rollNumber = document.getElementById('roll-number').value.trim();
+        if (rollNumber) {
+            currentRollNumber = rollNumber;
+            sessionStorage.setItem('loggedInAs', 'student');
+            sessionStorage.setItem('rollNumber', rollNumber);
+            showStudentView();
+        } else {
+            showToast('Please enter your roll number.', 'error');
+        }
+    });
+
+    document.getElementById('canteen-login-btn').addEventListener('click', () => {
+        const user = document.getElementById('canteen-user').value;
+        const pass = document.getElementById('canteen-pass').value;
+        // Simple hardcoded credentials
+        if (user === 'chandrettan' && pass === 'canteen123') {
+            sessionStorage.setItem('loggedInAs', 'canteen');
+            showCanteenView();
+        } else {
+            showToast('Invalid canteen credentials.', 'error');
+        }
+    });
+
+    function logout() {
+        sessionStorage.clear();
+        currentRollNumber = null;
+        if (unsubscribeCanteen) unsubscribeCanteen();
+        if (unsubscribeStudent) unsubscribeStudent();
+        showLoginScreen();
+    }
+
+    document.getElementById('student-logout-btn').addEventListener('click', logout);
+    document.getElementById('canteen-logout-btn').addEventListener('click', logout);
+
+    // --- View Management ---
+    function showLoginScreen() {
+        loginScreen.classList.remove('hidden');
+        studentView.classList.add('hidden');
+        canteenView.classList.add('hidden');
+    }
+
+    function showStudentView() {
+        loginScreen.classList.add('hidden');
+        studentView.classList.remove('hidden');
+        canteenView.classList.add('hidden');
+        document.getElementById('student-id-display').textContent = currentRollNumber;
+        renderMenu();
+        listenToStudentOrders();
+        listenToMealCapacity();
+    }
+
+    function showCanteenView() {
+        loginScreen.classList.add('hidden');
+        studentView.classList.add('hidden');
+        canteenView.classList.remove('hidden');
+        listenToAllOrders();
+    }
+
+    // --- Student View Logic ---
+    function renderMenu() {
+        const menuContainer = document.getElementById('menu-items');
+        menuContainer.innerHTML = '';
+        menu.forEach(item => {
+            const isMealDisabled = item.id === 'meal' && mealOrdersCount >= MEAL_CAPACITY;
+            const card = `
+                <div class="bg-white p-4 rounded-lg shadow flex justify-between items-center ${isMealDisabled ? 'opacity-50' : ''}">
+                    <div>
+                        <h3 class="font-bold text-lg">${item.name}</h3>
+                        <p class="text-gray-600">₹${item.price}</p>
+                    </div>
+                    <button class="add-to-cart-btn bg-blue-500 text-white w-10 h-10 rounded-full text-lg font-bold hover:bg-blue-600 disabled:bg-gray-300" 
+                            data-id="${item.id}" data-name="${item.name}" data-price="${item.price}" ${isMealDisabled ? 'disabled' : ''}>
+                        +
+                    </button>
+                </div>
+            `;
+            menuContainer.innerHTML += card;
+        });
+
+        document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => addToCart(e.currentTarget.dataset));
+        });
+        
+        if (mealOrdersCount >= MEAL_CAPACITY) {
+            document.getElementById('meal-capacity-alert').classList.remove('hidden');
+        } else {
+            document.getElementById('meal-capacity-alert').classList.add('hidden');
+        }
+    }
+
+    function addToCart(itemData) {
+        const existingItem = cart.find(item => item.id === itemData.id);
+        if (existingItem) {
+            existingItem.quantity++;
+        } else {
+            cart.push({
+                id: itemData.id,
+                name: itemData.name,
+                price: Number(itemData.price),
+                quantity: 1
+            });
+        }
+        renderCart();
+    }
+
+    function renderCart() {
+        const cartContainer = document.getElementById('cart-items');
+        const cartTotalEl = document.getElementById('cart-total');
+        const placeOrderBtn = document.getElementById('place-order-btn');
+
+        if (cart.length === 0) {
+            cartContainer.innerHTML = '<p class="text-gray-500 text-center">Your cart is empty.</p>';
+            cartTotalEl.textContent = '₹0';
+            placeOrderBtn.disabled = true;
+            return;
+        }
+
+        cartContainer.innerHTML = '';
+        let total = 0;
+        cart.forEach(item => {
+            total += item.price * item.quantity;
+            const itemEl = `
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="font-semibold">${item.name} (x${item.quantity})</p>
+                        <p class="text-sm text-gray-500">₹${item.price * item.quantity}</p>
+                    </div>
+                    <button class="remove-from-cart-btn text-red-500 hover:text-red-700" data-id="${item.id}">&times;</button>
+                </div>
+            `;
+            cartContainer.innerHTML += itemEl;
+        });
+
+        cartTotalEl.textContent = `₹${total}`;
+        placeOrderBtn.disabled = false;
+
+        document.querySelectorAll('.remove-from-cart-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => removeFromCart(e.currentTarget.dataset.id));
+        });
+    }
+
+    function removeFromCart(itemId) {
+        const itemIndex = cart.findIndex(item => item.id === itemId);
+        if (itemIndex > -1) {
+            if (cart[itemIndex].quantity > 1) {
+                cart[itemIndex].quantity--;
+            } else {
+                cart.splice(itemIndex, 1);
+            }
+        }
+        renderCart();
+    }
+
+    document.getElementById('place-order-btn').addEventListener('click', async () => {
+        if (cart.length === 0) return;
+
+        const timeSlot = document.getElementById('time-slot').value;
+        const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        
+        const mealInCart = cart.find(item => item.id === 'meal');
+        if (mealInCart && (mealOrdersCount + mealInCart.quantity) > MEAL_CAPACITY) {
+            showToast(`Sorry, only ${MEAL_CAPACITY - mealOrdersCount} meals are left.`, 'error');
+            return;
+        }
+
+        const orderData = {
+            studentId: currentRollNumber,
+            items: cart,
+            total,
+            timeSlot,
+            status: 'Confirmed',
+            paymentStatus: 'Pending',
+            createdAt: serverTimestamp(),
+        };
+
+        try {
+            const docRef = await addDoc(ordersCollectionRef, orderData);
+            showToast('Order placed successfully!');
+            cart = [];
+            renderCart();
+        } catch (error) {
+            console.error("Error placing order: ", error);
+            showToast('Failed to place order. Check Firestore rules.', 'error');
+        }
+    });
+
+    function listenToStudentOrders() {
+        if (unsubscribeStudent) unsubscribeStudent();
+        const q = query(ordersCollectionRef, where("studentId", "==", currentRollNumber));
+        
+        unsubscribeStudent = onSnapshot(q, (querySnapshot) => {
+            const historyContainer = document.getElementById('order-history');
+            if (querySnapshot.empty) {
+                historyContainer.innerHTML = '<p class="text-gray-500 text-center">You have no past orders.</p>';
+                return;
+            }
+            
+            historyContainer.innerHTML = '';
+            const orders = [];
+            querySnapshot.forEach(doc => orders.push({ id: doc.id, ...doc.data() }));
+            
+            orders.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+            orders.forEach(order => {
+                const paymentClass = order.paymentStatus === 'Paid' ? 'text-green-600' : 'text-red-600';
+                const statusClass = order.status === 'Delivered' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800';
+                
+                const orderCard = `
+                    <div class="border-t pt-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-bold">Order on ${new Date(order.createdAt?.seconds * 1000).toLocaleDateString()}</p>
+                                <p class="text-sm text-gray-500">Pickup: ${order.timeSlot}</p>
+                                <div class="mt-2">
+                                    ${order.items.map(i => `<span>${i.name} (x${i.quantity})</span>`).join(', ')}
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-lg">₹${order.total}</p>
+                                <p class="font-semibold ${paymentClass}">${order.paymentStatus}</p>
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full ${statusClass}">${order.status}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                historyContainer.innerHTML += orderCard;
+            });
+        }, (error) => {
+            console.error("Error listening to student orders:", error);
+            showToast("Could not fetch order history.", "error");
+        });
+    }
+    
+    function listenToMealCapacity() {
+         const q = query(ordersCollectionRef);
+         onSnapshot(q, (snapshot) => {
+            let count = 0;
+            snapshot.forEach(doc => {
+                const order = doc.data();
+                const mealItem = order.items.find(item => item.id === 'meal');
+                if (mealItem) {
+                    count += mealItem.quantity;
+                }
+            });
+            mealOrdersCount = count;
+            renderMenu();
+        });
+    }
+
+    // --- Canteen View Logic ---
+    function listenToAllOrders() {
+        if (unsubscribeCanteen) unsubscribeCanteen();
+        
+        const q = query(ordersCollectionRef);
+        
+        unsubscribeCanteen = onSnapshot(q, (querySnapshot) => {
+            const orders1030 = [];
+            const orders1300 = [];
+            let totalCollections = 0;
+            let pendingDues = 0;
+            let totalOrders = 0;
+            let currentMealCount = 0;
+
+            querySnapshot.forEach(doc => {
+                const order = { id: doc.id, ...doc.data() };
+                totalOrders++;
+                
+                if (order.timeSlot === '10:30 AM') {
+                    orders1030.push(order);
+                } else {
+                    orders1300.push(order);
+                }
+
+                if (order.paymentStatus === 'Paid') {
+                    totalCollections += order.total;
+                } else {
+                    pendingDues += order.total;
+                }
+
+                const mealItem = order.items.find(item => item.id === 'meal');
+                if (mealItem) {
+                    currentMealCount += mealItem.quantity;
+                }
+            });
+            
+            orders1030.sort((a,b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+            orders1300.sort((a,b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+
+            renderCanteenOrders(orders1030, 'orders-1030');
+            renderCanteenOrders(orders1300, 'orders-1300');
+            updateCanteenSummary(totalOrders, totalCollections, pendingDues, currentMealCount);
+        }, (error) => {
+            console.error("Error listening to all orders:", error);
+            showToast("Could not fetch orders. Check Firestore rules.", "error");
+        });
+    }
+
+    function renderCanteenOrders(orders, containerId) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+
+        if (orders.length === 0) {
+            container.innerHTML = '<p class="text-gray-500">No orders yet.</p>';
+            return;
+        }
+
+        orders.forEach(order => {
+            const card = `
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <div class="flex justify-between items-start mb-3">
+                        <h4 class="font-bold text-lg">Roll No: ${order.studentId}</h4>
+                        <p class="font-bold text-lg">₹${order.total}</p>
+                    </div>
+                    <div class="mb-3 text-sm">
+                        ${order.items.map(i => `<span class="bg-gray-200 px-2 py-1 rounded-full mr-1">${i.name} x${i.quantity}</span>`).join('')}
+                    </div>
+                    <div class="flex flex-wrap gap-2 items-center">
+                        <select class="order-status-select bg-gray-50 border rounded p-1 text-sm" data-id="${order.id}">
+                            <option value="Confirmed" ${order.status === 'Confirmed' ? 'selected' : ''}>Confirmed</option>
+                            <option value="Ready" ${order.status === 'Ready' ? 'selected' : ''}>Ready</option>
+                            <option value="Delivered" ${order.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                        </select>
+                        <button class="toggle-payment-btn text-xs font-semibold px-3 py-1 rounded-full ${order.paymentStatus === 'Paid' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}" data-id="${order.id}" data-current-status="${order.paymentStatus}">
+                            Mark as ${order.paymentStatus === 'Paid' ? 'Pending' : 'Paid'}
+                        </button>
+                    </div>
+                </div>
+            `;
+            container.innerHTML += card;
+        });
+
+        document.querySelectorAll('.order-status-select').forEach(select => {
+            select.addEventListener('change', (e) => updateOrderStatus(e.target.dataset.id, e.target.value));
+        });
+        document.querySelectorAll('.toggle-payment-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const newStatus = e.target.dataset.currentStatus === 'Paid' ? 'Pending' : 'Paid';
+                updatePaymentStatus(e.target.dataset.id, newStatus);
+            });
+        });
+    }
+
+    async function updateOrderStatus(orderId, newStatus) {
+        const orderRef = doc(ordersCollectionRef, orderId);
+        try {
+            await updateDoc(orderRef, { status: newStatus });
+            showToast(`Order status updated to ${newStatus}`);
+        } catch (error) {
+            console.error("Error updating status: ", error);
+            showToast('Failed to update status.', 'error');
+        }
+    }
+
+    async function updatePaymentStatus(orderId, newStatus) {
+        const orderRef = doc(ordersCollectionRef, orderId);
+        try {
+            await updateDoc(orderRef, { paymentStatus: newStatus });
+            showToast(`Payment status updated to ${newStatus}`);
+        } catch (error) {
+            console.error("Error updating payment: ", error);
+            showToast('Failed to update payment.', 'error');
+        }
+    }
+
+    function updateCanteenSummary(totalOrders, collections, dues, mealCount) {
+        document.getElementById('summary-total-orders').textContent = totalOrders;
+        document.getElementById('summary-total-collections').textContent = `₹${collections}`;
+        document.getElementById('summary-pending-dues').textContent = `₹${dues}`;
+        
+        const capacityBar = document.getElementById('meal-capacity-bar');
+        const percentage = Math.min((mealCount / MEAL_CAPACITY) * 100, 100);
+        capacityBar.style.width = `${percentage}%`;
+        capacityBar.textContent = `${mealCount}/${MEAL_CAPACITY}`;
+        if(percentage > 90) {
+            capacityBar.classList.remove('bg-blue-600');
+            capacityBar.classList.add('bg-red-600');
+        } else if (percentage > 60) {
+            capacityBar.classList.remove('bg-blue-600');
+            capacityBar.classList.add('bg-yellow-500');
+        } else {
+            capacityBar.classList.remove('bg-red-600', 'bg-yellow-500');
+            capacityBar.classList.add('bg-blue-600');
+        }
+    }
+
+    // --- App Initialization ---
+    window.onload = () => {
+        initializeAuth();
+    };
+</script>
